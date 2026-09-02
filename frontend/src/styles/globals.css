@@ -1,0 +1,169 @@
+@import 'tailwindcss';
+
+:root {
+  /* Neutral surface & text (app chrome — sidebar, header, panels) */
+  --text: #5b6472;
+  --text-h: #10151b;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --border: #e3e6eb;
+  --code-bg: #eef0f3;
+  --social-bg: rgba(238, 240, 243, 0.7);
+
+  /* ArvanCloud-inspired brand green */
+  --accent: #00b871;
+  --accent-hover: #00a364;
+  --accent-bg: rgba(0, 184, 113, 0.1);
+  --accent-border: rgba(0, 184, 113, 0.4);
+
+  /* Status */
+  --success: #189a5c;
+  --error: #d7373f;
+  --warning: #b7791f;
+
+  /* Dark developer surfaces — shared by the code editor, output console
+     and AI assistant panel so that "workspace" trio always reads as one
+     matching set, independent of the light/dark app theme below. */
+  --surface-dark: #1a1d22;
+  --surface-dark-alt: #16181d;
+  --border-dark: #2b2f37;
+  --text-dark: #d4d7dd;
+  --text-dark-muted: #7b8290;
+
+  --shadow-elevated:
+    rgba(16, 21, 27, 0.06) 0 1px 2px, rgba(16, 21, 27, 0.05) 0 6px 16px -6px;
+
+  --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+}
+
+/* Dark app theme — toggled via document.documentElement[data-theme].
+   Only the chrome tokens flip; the dark developer-surface tokens above
+   stay constant since the editor/console/AI panel are already dark. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --text: #97a0ad;
+  --text-h: #eef1f4;
+  --bg: #0f1216;
+  --surface: #171b21;
+  --border: #2a2f37;
+  --code-bg: #1e232b;
+  --social-bg: rgba(30, 35, 43, 0.7);
+
+  --accent-bg: rgba(0, 184, 113, 0.14);
+  --accent-border: rgba(0, 184, 113, 0.45);
+
+  --shadow-elevated:
+    rgba(0, 0, 0, 0.35) 0 1px 2px, rgba(0, 0, 0, 0.3) 0 6px 16px -6px;
+}
+
+/* Exposes the design tokens above as Tailwind utilities, e.g. bg-accent,
+   text-text-h, border-border, shadow-elevated, font-mono. Single source of
+   truth stays in the :root block; `inline` re-reads the live CSS values. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-code-bg: var(--code-bg);
+  --color-social-bg: var(--social-bg);
+
+  --color-text: var(--text);
+  --color-text-h: var(--text-h);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-border: var(--accent-border);
+
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-alt: var(--surface-dark-alt);
+  --color-border-dark: var(--border-dark);
+  --color-text-dark: var(--text-dark);
+  --color-text-dark-muted: var(--text-dark-muted);
+
+  --shadow-elevated: var(--shadow-elevated);
+  --font-sans: var(--sans);
+  --font-mono: var(--mono);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font: 15px/150% var(--sans);
+    color-scheme: light;
+    color: var(--text);
+    background: var(--bg);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    color: var(--text-h);
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--text-h);
+    background: var(--code-bg);
+  }
+
+  #app {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Thin scrollbar that stays nearly invisible until the container is hovered. */
+.scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-hover:hover {
+  scrollbar-color: rgba(123, 130, 144, 0.35) transparent;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scrollbar-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(123, 130, 144, 0.35);
+}

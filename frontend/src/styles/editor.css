@@ -1,0 +1,13 @@
+/*
+ * Specialized Monaco editor CSS — intentionally kept outside Tailwind.
+ *
+ * `.monaco-shell` resets ambient page typography (globals.css sets no
+ * letter-spacing globally, but this guards against any future ancestor
+ * that does) so Monaco's glyph rendering never desyncs from its own
+ * internally-computed cursor/selection pixel positions. Removing this
+ * reintroduces the cursor/text-misalignment bug from Phase 4.
+ */
+.monaco-shell {
+  text-align: left;
+  letter-spacing: normal;
+}

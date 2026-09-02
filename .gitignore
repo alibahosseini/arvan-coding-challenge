@@ -1,0 +1,34 @@
+# Dependencies
+frontend/node_modules
+
+# Build output
+frontend/dist
+frontend/dist-ssr
+*.local
+
+# Backend build artifacts
+backend/*.exe
+backend/server.log
+backend/server_run.log
+backend/.env
+backend/.env.*
+
+# Editor directories and files
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

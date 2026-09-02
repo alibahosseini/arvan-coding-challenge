@@ -1,0 +1,3 @@
+module challenge-api
+
+go 1.27.0
