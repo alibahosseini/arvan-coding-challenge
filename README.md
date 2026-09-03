@@ -82,14 +82,18 @@ code-dashboard/
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tsconfig.json
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   └── README.md
 │
 ├── backend/                 # Go mock API
 │   ├── main.go
 │   ├── go.mod
 │   ├── Dockerfile
+│   ├── .dockerignore
 │   └── README.md
 │
+├── docker-compose.yml         # Runs frontend + backend together
 ├── README.md                 # This file
 └── .gitignore
 ```
@@ -123,6 +127,39 @@ Starts the backend API server on its configured port (see
 
 Both the frontend dev server and the backend API server need to be running
 at the same time for "Run Code" to work — they are two separate processes.
+
+## Run with Docker
+
+A `docker-compose.yml` at the project root runs both services together —
+no local Node.js or Go installation required.
+
+```bash
+docker compose up --build
+```
+
+This builds and starts both containers:
+
+- The **frontend** dev server is published on the configured frontend port
+  (`5173`).
+- The **backend** API is published on the configured backend port (`8080`).
+- Inside Docker, the frontend's `/api/*` proxy is automatically pointed at
+  the backend container instead of the localhost default used outside
+  Docker (see `API_PROXY_TARGET` in `docker-compose.yml` and
+  `frontend/vite.config.ts`), so "Run Code" works out of the box.
+
+Open the frontend at whatever address your Docker host exposes port `5173`
+on to use the dashboard; the backend's API is reachable the same way on
+port `8080`.
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+Each service also has its own `Dockerfile` and `.dockerignore` under
+`frontend/` and `backend/` if you want to build/run either image
+individually.
 
 ## API Overview
 

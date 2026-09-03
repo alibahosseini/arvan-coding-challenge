@@ -13,10 +13,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // Forwards frontend calls to the local Go backend so the app can
-      // call relative /api/* paths instead of hardcoding localhost:8080.
+      // Forwards frontend calls to the Go backend so the app can call
+      // relative /api/* paths instead of hardcoding a backend host.
+      // Defaults to localhost for local (non-Docker) development; Docker
+      // Compose overrides this to the backend service's container name.
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,
       },
     },
