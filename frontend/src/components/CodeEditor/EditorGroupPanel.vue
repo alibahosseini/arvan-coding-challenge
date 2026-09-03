@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Sparkles, SplitSquareHorizontal, X } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useEditorTabsStore } from '../../stores/editorTabs'
-import { useAIAssistantStore } from '../../stores/aiAssistant'
+import { useCodeEditor } from '../../composables/useCodeEditor'
+import { draggedItem, EXPLORER_DND_MIME } from '../FileExplorer/dragState'
 import CodeEditor from './CodeEditor.vue'
 import EditorTabs from './EditorTabs.vue'
 
 const props = defineProps<{
   groupId: string
   isOnlyGroup: boolean
-  isFirstGroup: boolean
+  isLastGroup: boolean
 }>()
 
 const emit = defineEmits<{
@@ -18,11 +19,12 @@ const emit = defineEmits<{
 }>()
 
 const store = useEditorTabsStore()
-const aiStore = useAIAssistantStore()
+const { files } = useCodeEditor()
 
 const group = computed(() => store.groups.find((g) => g.id === props.groupId) ?? null)
 const activeTab = computed(() => (group.value?.activeTabId ? store.tabs[group.value.activeTabId] : null))
 const openTabIds = computed(() => group.value?.tabIds ?? [])
+const isActiveGroup = computed(() => store.activeGroupId === props.groupId)
 
 function focusGroup() {
   store.setActiveGroup(props.groupId)
@@ -30,10 +32,6 @@ function focusGroup() {
 
 function onContentUpdate(tabId: string, value: string) {
   store.updateTabContent(tabId, value)
-}
-
-function splitThisGroup() {
-  store.splitGroup(props.groupId)
 }
 
 function closeThisGroup() {
@@ -49,58 +47,88 @@ function revealLine(tabId: string, lineNumber: number) {
 }
 
 defineExpose({ revealLine, groupId: props.groupId })
+
+// --- Drag a file from the explorer onto this pane's editor area to open it here ---
+const isFileDragOver = ref(false)
+
+function onEditorDragOver(event: DragEvent) {
+  if (!event.dataTransfer?.types.includes(EXPLORER_DND_MIME)) return
+  if (draggedItem.value?.kind !== 'file') return
+
+  event.preventDefault()
+  event.stopPropagation()
+  event.dataTransfer.dropEffect = 'move'
+  isFileDragOver.value = true
+}
+
+function onEditorDragLeave(event: DragEvent) {
+  const related = event.relatedTarget as Node | null
+  if (related && (event.currentTarget as HTMLElement).contains(related)) return
+  isFileDragOver.value = false
+}
+
+function onEditorDrop(event: DragEvent) {
+  if (!event.dataTransfer?.types.includes(EXPLORER_DND_MIME)) return
+
+  const dragged = draggedItem.value
+  draggedItem.value = null
+  isFileDragOver.value = false
+  if (dragged?.kind !== 'file' || !dragged.id) return
+
+  // Stop this before it reaches Monaco's own drop handling (attached directly
+  // on its container), which otherwise consumes the event first and prevents
+  // it from ever reaching this bubble-phase listener.
+  event.preventDefault()
+  event.stopPropagation()
+
+  const file = files.value.find((f) => f.id === dragged.id)
+  if (!file) return
+
+  store.openFile(file, { preview: false, groupId: props.groupId })
+}
 </script>
 
 <template>
   <section
     class="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-border last:border-r-0"
+    :class="!isOnlyGroup && isActiveGroup && 'ring-1 ring-inset ring-accent/40'"
     @click="focusGroup"
     @focusin="focusGroup"
   >
-    <div class="flex items-stretch justify-between border-b border-border">
-      <EditorTabs :group-id="groupId" class="min-w-0 flex-1" @save-as="(id) => emit('saveAs', id)" />
-      <div class="flex shrink-0 items-center gap-1 px-1">
-        <template v-if="isFirstGroup">
-          <Button variant="ghost" size="icon" class="h-6 w-6" title="Split Editor" aria-label="Split editor" @click.stop="splitThisGroup">
-            <SplitSquareHorizontal :size="14" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-6 w-6"
-            title="AI Assistant"
-            aria-label="Open AI Assistant"
-            @click.stop="aiStore.toggle"
-          >
-            <Sparkles :size="14" />
-          </Button>
-        </template>
-        <Button
-          v-if="!isOnlyGroup"
-          variant="ghost"
-          size="icon"
-          class="h-6 w-6"
-          title="Close Editor Group"
-          aria-label="Close editor group"
-          @click.stop="closeThisGroup"
-        >
-          <X :size="14" />
-        </Button>
-      </div>
+    <div class="flex items-stretch border-b border-border">
+      <EditorTabs :group-id="groupId" class="min-w-0 flex-1" :class="isLastGroup && 'pr-[210px]'" @save-as="(id) => emit('saveAs', id)" />
     </div>
 
-    <CodeEditor
-      v-if="activeTab"
-      ref="codeEditorRef"
-      :tab-id="activeTab.id"
-      :content="activeTab.content"
-      :language="activeTab.language"
-      :open-tab-ids="openTabIds"
-      @update:content="onContentUpdate"
-    />
-    <div v-else class="flex flex-1 flex-col items-center justify-center gap-1 bg-surface-dark text-center text-text-dark">
-      <p>No file open</p>
-      <p class="text-[12.5px] text-text-dark-muted">Select a file from the explorer to start editing.</p>
+    <div
+      class="relative flex min-h-0 flex-1"
+      @dragover.capture="onEditorDragOver"
+      @dragleave.capture="onEditorDragLeave"
+      @drop.capture="onEditorDrop"
+    >
+      <CodeEditor
+        v-if="activeTab"
+        ref="codeEditorRef"
+        :tab-id="activeTab.id"
+        :content="activeTab.content"
+        :language="activeTab.language"
+        :open-tab-ids="openTabIds"
+        @update:content="onContentUpdate"
+      />
+      <div v-else class="flex flex-1 flex-col items-center justify-center gap-2 bg-surface-dark text-center text-text-dark">
+        <p>No file open</p>
+        <p class="text-[12.5px] text-text-dark-muted">Select a file from the explorer to start editing.</p>
+        <Button v-if="!isOnlyGroup" variant="outline" size="sm" class="mt-2" @click.stop="closeThisGroup">
+          <X :size="14" />
+          Close Editor
+        </Button>
+      </div>
+
+      <div
+        v-if="isFileDragOver"
+        class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center border-2 border-dashed border-accent bg-black/40"
+      >
+        <span class="rounded-md bg-surface px-3 py-1.5 text-[12.5px] font-medium text-text-h shadow-elevated">Drop to open here</span>
+      </div>
     </div>
   </section>
 </template>

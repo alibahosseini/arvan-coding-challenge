@@ -274,6 +274,11 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
 
       delete tabs.value[id]
     }
+
+    // Closing a tab can leave its split pane with none left — collapse that
+    // pane automatically instead of leaving an empty "No file open" group
+    // hanging around (the last remaining group is always kept, even empty).
+    pruneEmptyGroups()
   }
 
   async function closeTab(tabId: string, opts: { force?: boolean } = {}): Promise<void> {
@@ -425,11 +430,17 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
     }
   }
 
-  function splitGroup(_sourceGroupId: string, tabId?: string): string {
+  function splitGroup(sourceGroupId: string, tabId?: string): string {
     const newGroup = makeDefaultGroup()
     groups.value.push(newGroup)
-    if (tabId) moveTabToGroup(tabId, newGroup.id)
-    activeGroupId.value = newGroup.id
+    if (tabId) {
+      moveTabToGroup(tabId, newGroup.id)
+    } else {
+      // Splitting with no tab to move leaves the new pane empty — keep focus
+      // (and the shared tab bar) on the source group instead of jumping to
+      // an empty pane, so the open file's tabs don't appear to disappear.
+      activeGroupId.value = sourceGroupId
+    }
     return newGroup.id
   }
 

@@ -19,6 +19,16 @@ export interface DraggedExplorerItem {
 // live valid/invalid drop-target state while the drag is in progress.
 export const draggedItem = ref<DraggedExplorerItem | null>(null)
 
+// The single folder path currently accepting the drop, kept as shared state
+// (rather than a per-node local boolean) so that when the pointer moves from
+// a folder row into one of its own nested descendant folders, the browser
+// never fires `dragleave` on the ancestor (the pointer never actually left
+// its bounding box) — with per-node state that left the ancestor's highlight
+// stuck "on". A single shared "active path" is instead just overwritten by
+// whichever folder's dragover fires last, so only the deepest hovered folder
+// is ever highlighted.
+export const dropTargetPath = ref<string | null>(null)
+
 // Dropping a folder onto itself or into one of its own descendants would
 // either no-op or corrupt the tree (a path can't be moved inside its own
 // prefix), so both are rejected before ever reaching the move functions.

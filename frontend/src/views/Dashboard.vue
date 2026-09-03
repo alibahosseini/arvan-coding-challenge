@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { Files, Loader2, PanelLeft, Play, Search as SearchIcon } from 'lucide-vue-next'
+import { Files, Loader2, PanelLeft, Play, Search as SearchIcon, Sparkles, SplitSquareHorizontal } from 'lucide-vue-next'
 import { useCodeEditor } from '../composables/useCodeEditor'
 import { useEditorTabsStore } from '../stores/editorTabs'
 import { useSettingsStore } from '../stores/settings'
@@ -114,6 +114,12 @@ function handleMoveFolder(path: string, targetParentPath: string) {
   for (const file of files.value) {
     tabsStore.updateTabMetaForFile(file.id, { path: file.path, name: file.name, language: file.language })
   }
+}
+
+function splitEditor() {
+  const currentGroupId = tabsStore.activeGroupId ?? tabsStore.groups[0]?.id
+  if (!currentGroupId) return
+  tabsStore.splitGroup(currentGroupId)
 }
 
 function isTabDirtyForFile(fileId: string): boolean {
@@ -291,10 +297,6 @@ async function runCode() {
             <h1 class="text-2xl">Code Editor</h1>
             <p class="mt-1.5 text-sm text-text">Edit your page code and run it in a secure execution environment.</p>
           </div>
-          <label class="flex shrink-0 items-center gap-2 text-[12.5px] text-text">
-            <input type="checkbox" :checked="settingsStore.autoSaveEnabled" class="h-3.5 w-3.5" @change="settingsStore.toggleAutoSave" />
-            Auto Save
-          </label>
         </div>
 
         <div class="relative flex min-h-0 flex-1 items-stretch gap-5 max-[1100px]:flex-col">
@@ -370,14 +372,29 @@ async function runCode() {
                 </Button>
               </div>
 
-              <div class="flex min-h-0 flex-1 items-stretch">
+              <div class="relative flex min-h-0 flex-1 items-stretch">
+                <div class="absolute top-0 right-0 z-10 flex items-stretch gap-3 border-l border-border bg-surface py-2 pr-2 pl-3">
+                  <label class="flex shrink-0 items-center gap-2 text-[12.5px] text-text">
+                    <input type="checkbox" :checked="settingsStore.autoSaveEnabled" class="h-3.5 w-3.5" @change="settingsStore.toggleAutoSave" />
+                    Auto Save
+                  </label>
+                  <div class="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" class="h-6 w-6" title="Split Editor" aria-label="Split editor" @click="splitEditor">
+                      <SplitSquareHorizontal :size="14" />
+                    </Button>
+                    <Button variant="ghost" size="icon" class="h-6 w-6" title="AI Assistant" aria-label="Open AI Assistant" @click="aiStore.toggle">
+                      <Sparkles :size="14" />
+                    </Button>
+                  </div>
+                </div>
+
                 <EditorGroupPanel
-                  v-for="group in tabsStore.groups"
+                  v-for="(group, index) in tabsStore.groups"
                   :key="group.id"
                   ref="groupPanelRefs"
                   :group-id="group.id"
                   :is-only-group="tabsStore.groups.length === 1"
-                  :is-first-group="group.id === tabsStore.groups[0]?.id"
+                  :is-last-group="index === tabsStore.groups.length - 1"
                   @save-as="openSaveAs"
                 />
               </div>

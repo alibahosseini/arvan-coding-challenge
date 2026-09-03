@@ -11,7 +11,7 @@ import {
 import defaultFolderIcon from '../../assets/FormatIcons/default_folder.svg'
 import defaultFolderOpenIcon from '../../assets/FormatIcons/default_folder_opened.svg'
 import type { FileSystemTarget, FileTreeNode } from '../../types/code'
-import { draggedItem, EXPLORER_DND_MIME, isValidDropTarget } from './dragState'
+import { draggedItem, dropTargetPath, EXPLORER_DND_MIME, isValidDropTarget } from './dragState'
 import { getFileIcon } from './fileIcon'
 import InlineCreateInput from './InlineCreateInput.vue'
 import type { CreatingState } from './creating'
@@ -112,7 +112,7 @@ function cancelRename() {
 const folderIcon = computed(() => (props.expanded.has((props.node as { path: string }).path) ? defaultFolderOpenIcon : defaultFolderIcon))
 
 // --- Drag and drop: move a file/folder onto a folder ---
-const isDragOver = ref(false)
+const isDragOver = computed(() => dropTargetPath.value === props.node.path)
 
 function onDragStart(event: DragEvent) {
   const node = props.node
@@ -125,7 +125,7 @@ function onDragStart(event: DragEvent) {
 
 function onDragEnd() {
   draggedItem.value = null
-  isDragOver.value = false
+  dropTargetPath.value = null
 }
 
 // Only folders accept drops. The dragged item's identity is read from the
@@ -139,19 +139,25 @@ function onFolderDragOver(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
   event.dataTransfer.dropEffect = 'move'
-  isDragOver.value = true
+  // Overwritten by whichever (deepest) folder's dragover fires last, so
+  // only one folder is ever highlighted — see dropTargetPath's comment.
+  dropTargetPath.value = props.node.path
 }
 
 function onFolderDragLeave(event: DragEvent) {
+  // Only the currently-active target clears itself, and only once the
+  // pointer has genuinely left its box (not just moved into a nested
+  // descendant folder, which is still contained within it).
+  if (dropTargetPath.value !== props.node.path) return
   const related = event.relatedTarget as Node | null
   if (related && (event.currentTarget as HTMLElement).contains(related)) return
-  isDragOver.value = false
+  dropTargetPath.value = null
 }
 
 function onFolderDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
-  isDragOver.value = false
+  dropTargetPath.value = null
 
   const dragged = draggedItem.value
   draggedItem.value = null
@@ -166,7 +172,19 @@ function onFolderDrop(event: DragEvent) {
 </script>
 
 <template>
-  <li v-if="node.type === 'folder'" class="list-none">
+  <li
+    v-if="node.type === 'folder'"
+    class="relative list-none"
+    @dragover="onFolderDragOver"
+    @dragleave="onFolderDragLeave"
+    @drop="onFolderDrop"
+  >
+    <div
+      v-if="isDragOver"
+      class="pointer-events-none absolute inset-0 z-10 rounded-md bg-accent-bg/40 ring-2 ring-inset ring-accent"
+      aria-hidden="true"
+    />
+
     <div v-if="isRenaming" class="flex items-center gap-1.5 rounded-md px-2.5 py-[5px]" :style="{ paddingLeft: indent() }">
       <img :src="folderIcon" class="h-[15px] w-[15px] shrink-0 object-contain" alt="" />
       <input
@@ -186,14 +204,11 @@ function onFolderDrop(event: DragEvent) {
           type="button"
           draggable="true"
           class="flex w-full items-center gap-1.5 rounded-md px-2.5 py-[5px] text-left text-[13px] text-text outline-none hover:bg-code-bg hover:text-text-h focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-accent"
-          :class="isDragOver && 'bg-accent-bg text-text-h ring-1 ring-inset ring-accent'"
+          :class="isDragOver && 'text-text-h'"
           :style="{ paddingLeft: indent() }"
           @click="$emit('toggle', node.path)"
           @dragstart="onDragStart"
           @dragend="onDragEnd"
-          @dragover="onFolderDragOver"
-          @dragleave="onFolderDragLeave"
-          @drop="onFolderDrop"
         >
           <component
             :is="expanded.has(node.path) ? ChevronDown : ChevronRight"

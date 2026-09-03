@@ -97,8 +97,7 @@ function pinnedBoundaryIndex() {
 
 <template>
   <div
-    v-if="tabs.length"
-    class="scrollbar-hover flex items-stretch overflow-x-auto border-b border-border bg-surface"
+    class="scrollbar-hover flex items-stretch overflow-x-auto bg-surface"
     role="tablist"
     aria-label="Open files"
     @dragleave="onDragLeaveTabs"
