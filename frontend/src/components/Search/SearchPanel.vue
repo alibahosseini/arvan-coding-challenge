@@ -92,7 +92,7 @@ function lineParts(line: LineMatch): HighlightPart[] {
     </div>
 
     <div class="flex-1 overflow-y-auto px-1.5 pb-2.5">
-      <p v-if="query && !results.length" class="px-2 py-3 text-center text-[12.5px] text-text-dark-muted">No results found</p>
+      <p v-if="query && !results.length" class="px-2 py-3 text-center text-[12.5px] text-text-dark-muted">No matches for "{{ query }}"</p>
       <p v-else-if="query" class="px-2 pb-1.5 text-[11px] text-text-dark-muted">
         {{ totalMatches }} results in {{ results.length }} files
       </p>

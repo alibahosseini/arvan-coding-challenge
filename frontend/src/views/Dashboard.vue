@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Files, Loader2, PanelLeft, Play, Search as SearchIcon, Sparkles, SplitSquareHorizontal } from 'lucide-vue-next'
 import { useCodeEditor } from '../composables/useCodeEditor'
 import { useEditorTabsStore } from '../stores/editorTabs'
@@ -215,6 +215,25 @@ useKeyboardShortcuts({
   reopenClosedTab: () => tabsStore.reopenClosedTab(),
 })
 
+const tips = [
+  { keys: ['Ctrl', 'S'], text: 'to save the current file' },
+  { keys: ['Ctrl', 'P'], text: 'to quickly jump to any file' },
+  { keys: ['Ctrl', 'Shift', 'F'], text: 'to search across all files' },
+]
+const activeTipIndex = ref(0)
+const activeTip = computed(() => tips[activeTipIndex.value])
+let tipInterval: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  tipInterval = setInterval(() => {
+    activeTipIndex.value = (activeTipIndex.value + 1) % tips.length
+  }, 5000)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(tipInterval)
+})
+
 // --- Run code (executes the active tab's buffered content) ---
 const isRunning = ref(false)
 const executionStatus = ref<ExecutionStatus>('idle')
@@ -295,7 +314,7 @@ async function runCode() {
         <div class="flex items-center justify-between gap-3">
           <div>
             <h1 class="text-2xl">Code Editor</h1>
-            <p class="mt-1.5 text-sm text-text">Edit your page code and run it in a secure execution environment.</p>
+            <p class="mt-1.5 text-sm text-text">Edit your files and run them to see the output.</p>
           </div>
         </div>
 
@@ -357,6 +376,19 @@ async function runCode() {
             />
 
             <SearchPanel v-show="leftPanel === 'search'" :files="files" class="min-h-0 flex-1" @open-result="openSearchResult" />
+
+            <div class="flex shrink-0 flex-col items-start gap-1 border-t border-border px-3 py-2.5">
+              <span class="text-[11px] font-medium uppercase tracking-wide text-text-dark-muted/70">Tip</span>
+              <Transition name="tip-fade" mode="out-in">
+                <span :key="activeTipIndex" class="flex w-full items-center gap-1 overflow-hidden text-xs whitespace-nowrap text-text-dark-muted">
+                  <template v-for="(key, index) in activeTip.keys" :key="key">
+                    <kbd class="shrink-0 rounded border border-border bg-code-bg px-1.5 py-0.5 text-[11px] font-medium text-text-h">{{ key }}</kbd
+                    ><span v-if="index < activeTip.keys.length - 1" class="shrink-0">+</span>
+                  </template>
+                  <span class="overflow-hidden text-ellipsis">{{ activeTip.text }}</span>
+                </span>
+              </Transition>
+            </div>
           </aside>
 
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
@@ -450,3 +482,20 @@ async function runCode() {
     </AlertDialogRoot>
   </div>
 </template>
+
+<style scoped>
+.tip-fade-enter-active,
+.tip-fade-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.tip-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.tip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>
