@@ -431,6 +431,16 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
   }
 
   function splitGroup(sourceGroupId: string, tabId?: string): string {
+    if (!tabId) {
+      // Reuse an already-empty group instead of stacking up multiple blank
+      // panes when Split Editor is clicked more than once.
+      const existingEmpty = groups.value.find((g) => g.id !== sourceGroupId && g.tabIds.length === 0)
+      if (existingEmpty) {
+        activeGroupId.value = sourceGroupId
+        return existingEmpty.id
+      }
+    }
+
     const newGroup = makeDefaultGroup()
     groups.value.push(newGroup)
     if (tabId) {
