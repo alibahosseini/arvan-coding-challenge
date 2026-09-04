@@ -93,6 +93,14 @@ function onDragEnd() {
 function pinnedBoundaryIndex() {
   return tabs.value.filter((t) => t.isPinned).length
 }
+
+function onWheel(event: WheelEvent) {
+  if (event.deltaY === 0) return
+  const el = event.currentTarget as HTMLElement
+  if (el.scrollWidth <= el.clientWidth) return
+  event.preventDefault()
+  el.scrollLeft += event.deltaY
+}
 </script>
 
 <template>
@@ -103,6 +111,7 @@ function pinnedBoundaryIndex() {
     @dragleave="onDragLeaveTabs"
     @drop="onDrop"
     @dragover.prevent
+    @wheel="onWheel"
   >
     <template v-for="(tab, index) in tabs" :key="tab.id">
       <div v-if="dropIndex === index" class="w-0.5 shrink-0 self-stretch bg-accent" aria-hidden="true" />
