@@ -14,9 +14,7 @@ const themeStore = useThemeStore()
 <template>
   <header class="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-surface px-5">
     <div class="flex min-w-0 items-center gap-2">
-      <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-accent text-white" aria-hidden="true">
-        <img :src="arvanLogo" class="h-10 w-10" width="40" height="40" alt="" />
-      </span>
+      <img :src="arvanLogo" class="h-7 w-7 shrink-0 object-contain" width="28" height="28" alt="ArvanCloud logo" />
       <span class="whitespace-nowrap text-[15px] font-semibold text-text-h">ArvanCloud</span>
       <span class="text-border max-[640px]:hidden" aria-hidden="true">/</span>
       <span class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-text max-[640px]:hidden">{{ projectName }}</span>
