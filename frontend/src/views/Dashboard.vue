@@ -322,7 +322,7 @@ async function runCode() {
           <aside
             class="relative flex shrink-0 flex-col overflow-hidden rounded-[10px] border border-border bg-surface max-[1100px]:absolute max-[1100px]:inset-0 max-[1100px]:z-[5] max-[1100px]:hidden max-[1100px]:max-h-[60vh] max-[1100px]:w-full! max-[1100px]:shadow-elevated"
             :style="{ width: explorerWidth + 'px' }"
-            :class="isExplorerOpen && 'max-[1100px]:flex'"
+            :class="isExplorerOpen && 'max-[1100px]:flex!'"
           >
             <div
               class="group absolute inset-y-0 right-0 z-10 -mr-1 w-2 cursor-col-resize max-[1100px]:hidden"
@@ -393,7 +393,7 @@ async function runCode() {
 
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
             <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-border bg-surface">
-              <div class="hidden items-center gap-2 border-b border-border px-3 py-2 max-[1100px]:flex">
+              <div class="hidden items-center gap-2 border-b border-border px-3 py-2 max-[1100px]:relative max-[1100px]:z-10 max-[1100px]:flex">
                 <Button
                   variant="outline"
                   size="icon"
