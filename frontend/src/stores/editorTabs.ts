@@ -250,6 +250,8 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
   }
 
   function removeTabsFromGroups(tabIds: string[]) {
+    const affectedGroupIds = new Set<string>()
+
     for (const id of tabIds) {
       const tab = tabs.value[id]
       if (!tab) continue
@@ -264,6 +266,7 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
       }
 
       if (group) {
+        affectedGroupIds.add(group.id)
         const index = group.tabIds.indexOf(id)
         if (index !== -1) group.tabIds.splice(index, 1)
         if (group.activeTabId === id) {
@@ -278,7 +281,9 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
     // Closing a tab can leave its split pane with none left — collapse that
     // pane automatically instead of leaving an empty "No file open" group
     // hanging around (the last remaining group is always kept, even empty).
-    pruneEmptyGroups()
+    // Only groups that just lost a tab are considered, so an intentionally
+    // empty pane from Split Editor isn't swept away by an unrelated close.
+    pruneEmptyGroups(affectedGroupIds)
   }
 
   async function closeTab(tabId: string, opts: { force?: boolean } = {}): Promise<void> {
@@ -416,12 +421,12 @@ export const useEditorTabsStore = defineStore('editorTabs', () => {
     targetGroup.activeTabId = tabId
     activeGroupId.value = targetGroup.id
 
-    pruneEmptyGroups()
+    pruneEmptyGroups(new Set([sourceGroup.id]))
   }
 
-  function pruneEmptyGroups() {
+  function pruneEmptyGroups(affectedGroupIds?: Set<string>) {
     if (groups.value.length <= 1) return
-    const nonEmpty = groups.value.filter((g) => g.tabIds.length > 0)
+    const nonEmpty = groups.value.filter((g) => g.tabIds.length > 0 || (affectedGroupIds && !affectedGroupIds.has(g.id)))
     if (nonEmpty.length === groups.value.length) return
 
     groups.value = nonEmpty.length ? nonEmpty : [groups.value[0]]

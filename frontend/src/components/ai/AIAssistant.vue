@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ArrowUp, Sparkles, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -50,6 +50,15 @@ function onKeydown(event: KeyboardEvent) {
     submit()
   }
 }
+
+// The panel is only mounted while open (v-if in Dashboard.vue), so this
+// listener's lifecycle naturally matches its visibility.
+function onWindowKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') store.close()
+}
+
+onMounted(() => window.addEventListener('keydown', onWindowKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onWindowKeydown))
 </script>
 
 <template>
